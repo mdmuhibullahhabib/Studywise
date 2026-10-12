@@ -65,8 +65,6 @@ export function MentorCard({ mentor }: { mentor: MentorCardData }) {
         </p>
       </Link>
 
-      {/* Explicit, discrete CTAs — siblings of the profile-navigation links
-          above, not nested inside them (nested <a> tags are invalid HTML). */}
       <div className="flex gap-2">
         <Link href={`/mentors/${mentor.id}`} className="btn-secondary flex-1 !py-2 text-xs">
           View Profile
