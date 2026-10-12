@@ -1,0 +1,527 @@
+// StudyWise — Prisma schema
+// PostgreSQL + Prisma. Run `npx prisma migrate dev` after configuring DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  MORE_INFO_REQUIRED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  MEETING
+  RECORDING
+  SYSTEM
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+enum RecordingStatus {
+  NONE
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+  REPORTED
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  SESSION_REMINDER
+  MEETING_READY
+  RECORDING_READY
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  REVIEW_RECEIVED
+  PAYOUT_COMPLETED
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// CORE IDENTITY
+// ─────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  emailVerified DateTime?
+  passwordHash  String? // null when using an OAuth-only account
+  role          UserRole   @default(STUDENT)
+  avatarUrl     String?
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Auth.js relations
+  accounts Account[]
+  sessions Session[]
+
+  studentProfile    StudentProfile?
+  mentorProfile     MentorProfile?
+  mentorApplication MentorApplication?
+
+  conversationsAsStudent Conversation[] @relation("StudentConversations")
+  conversationsAsMentor  Conversation[] @relation("MentorConversations")
+  sentMessages           Message[]      @relation("SentMessages")
+
+  bookingsAsStudent Booking[] @relation("StudentBookings")
+  bookingsAsMentor  Booking[] @relation("MentorBookings")
+
+  meetingsAsStudent Meeting[] @relation("StudentMeetings")
+  meetingsAsMentor  Meeting[] @relation("MentorMeetings")
+
+  paymentsAsStudent Payment[] @relation("StudentPayments")
+  paymentsAsMentor  Payment[] @relation("MentorPayments")
+
+  reviewsWritten  Review[] @relation("StudentReviews")
+  reviewsReceived Review[] @relation("MentorReviews")
+
+  reviewedApplications MentorApplication[] @relation("ApplicationReviewer")
+
+  notifications Notification[]
+
+  @@index([role])
+  @@index([status])
+}
+
+// Auth.js (NextAuth) standard adapter models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PROFILES
+// ─────────────────────────────────────────────────────────────────────────
+
+model StudentProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationLevel String?
+  institution    String?
+  subjects       String[] @default([])
+  interests      String[] @default([])
+  goals          String?
+  bio            String?
+  onboardedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model MentorProfile {
+  id                 String              @id @default(cuid())
+  userId             String              @unique
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String?
+  // Core to the StudyWise positioning: this mentor's own study-abroad
+  // journey, shown prominently on cards and the profile header.
+  country            String? // country the mentor is currently studying in
+  university         String? // current institution
+  studyLevel         String? // e.g. "Bachelor's", "Master's", "PhD"
+  bio                String?
+  expertise          String[]            @default([])
+  subjects           String[]            @default([])
+  languages          String[]            @default([])
+  education          Json[]              @default([]) // [{ institution, degree, field, startYear, endYear }]
+  experience         Json[]              @default([]) // [{ organization, role, startYear, endYear, description }]
+  teachingApproach   String?
+  hourlyRate         Decimal?            @db.Decimal(10, 2)
+  currency           String              @default("USD")
+  verified           Boolean             @default(false)
+  verificationStatus VerificationStatus  @default(UNVERIFIED)
+  ratingAverage      Decimal             @default(0) @db.Decimal(3, 2)
+  ratingCount        Int                 @default(0)
+  isDiscoverable     Boolean             @default(false) // only true once APPROVED
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  availability Availability[]
+  bookings     Booking[]
+
+  @@index([isDiscoverable])
+  @@index([verified])
+}
+
+model MentorApplication {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           VerificationStatus @default(PENDING)
+  submittedAt      DateTime           @default(now())
+  reviewedAt       DateTime?
+  reviewerId       String?
+  reviewer         User?              @relation("ApplicationReviewer", fields: [reviewerId], references: [id])
+  rejectionReason  String?
+  notesForReviewer String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id        String   @id @default(cuid())
+  studentId String
+  mentorId  String
+  student   User     @relation("StudentConversations", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor    User     @relation("MentorConversations", fields: [mentorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+  bookings Booking[]
+  meetings Meeting[]
+
+  // One conversation per student/mentor pair — prevents accidental duplicates.
+  @@unique([studentId, mentorId])
+  @@index([studentId])
+  @@index([mentorId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  type           MessageType  @default(TEXT)
+  content        String?      @db.Text
+  attachmentUrl  String?
+  relatedId      String? // bookingId / meetingId / recordingId depending on type
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([conversationId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AVAILABILITY & BOOKING
+// ─────────────────────────────────────────────────────────────────────────
+
+// Recurring weekly availability window.
+model Availability {
+  id        String         @id @default(cuid())
+  mentorId  String
+  mentor    MentorProfile  @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  dayOfWeek Int // 0 = Sunday .. 6 = Saturday
+  startTime String // "HH:mm", interpreted in `timezone`
+  endTime   String // "HH:mm"
+  timezone  String // IANA tz, e.g. "America/New_York"
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([mentorId, dayOfWeek])
+}
+
+// One-off exceptions: blocked dates, holidays, extra availability.
+model AvailabilityException {
+  id        String   @id @default(cuid())
+  mentorId  String
+  date      DateTime @db.Date
+  isBlocked Boolean  @default(true) // true = unavailable this date; false = extra window
+  startTime String?
+  endTime   String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([mentorId, date])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  studentId      String
+  student        User          @relation("StudentBookings", fields: [studentId], references: [id])
+  mentorId       String
+  mentor         User          @relation("MentorBookings", fields: [mentorId], references: [id])
+  mentorProfileId String
+  mentorProfile  MentorProfile @relation(fields: [mentorProfileId], references: [id])
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+
+  subject   String
+  date      DateTime @db.Date
+  startTime String // "HH:mm" in mentor's booking timezone
+  endTime   String
+  timezone  String
+  duration  Int // minutes
+
+  price    Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  status          BookingStatus @default(PENDING)
+  cancelledBy     String? // userId
+  cancellationReason String?
+  cancelledAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payment  Payment?
+  meeting  Meeting?
+  review   Review?
+  recordings Recording[]
+
+  // Prevents double-booking the same mentor for the same date/time at the DB level.
+  @@unique([mentorId, date, startTime])
+  @@index([studentId, status])
+  @@index([mentorId, status])
+  @@index([date])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MEETINGS & RECORDINGS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Meeting {
+  id               String          @id @default(cuid())
+  bookingId        String          @unique
+  booking          Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  conversationId   String
+  conversation     Conversation    @relation(fields: [conversationId], references: [id])
+  studentId        String
+  student          User            @relation("StudentMeetings", fields: [studentId], references: [id])
+  mentorId         String
+  mentor           User            @relation("MentorMeetings", fields: [mentorId], references: [id])
+
+  provider         String // e.g. "webrtc" | "zoom" | "google_meet" — see MeetingProvider abstraction
+  providerMeetingId String?
+  joinUrl          String?
+
+  status           MeetingStatus   @default(SCHEDULED)
+  scheduledStart   DateTime
+  startedAt        DateTime?
+  endedAt          DateTime?
+  duration         Int? // minutes, computed on end
+
+  recordingStatus  RecordingStatus @default(NONE)
+  consentDisclosed Boolean         @default(false)
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  recordings Recording[]
+
+  @@index([status])
+  @@index([studentId])
+  @@index([mentorId])
+}
+
+model Recording {
+  id         String           @id @default(cuid())
+  meetingId  String
+  meeting    Meeting          @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  bookingId  String
+  booking    Booking          @relation(fields: [bookingId], references: [id])
+
+  storageKey String // private object storage key — never a public URL
+  provider   String @default("s3") // storage provider abstraction
+  duration   Int? // seconds
+  sizeBytes  BigInt?
+  status     RecordingStatus  @default(PROCESSING)
+  failureReason String?
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([meetingId])
+  @@index([bookingId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String        @unique
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  studentId         String
+  student           User          @relation("StudentPayments", fields: [studentId], references: [id])
+  mentorId          String
+  mentor            User          @relation("MentorPayments", fields: [mentorId], references: [id])
+
+  amount            Decimal       @db.Decimal(10, 2)
+  platformFee       Decimal       @db.Decimal(10, 2)
+  mentorAmount      Decimal       @db.Decimal(10, 2)
+  currency          String        @default("USD")
+
+  provider          String // e.g. "stripe" — see PaymentProvider abstraction
+  providerPaymentId String?
+  status            PaymentStatus @default(PENDING)
+  failureReason     String?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id        String       @id @default(cuid())
+  bookingId String       @unique
+  booking   Booking      @relation(fields: [bookingId], references: [id])
+  studentId String
+  student   User         @relation("StudentReviews", fields: [studentId], references: [id])
+  mentorId  String
+  mentor    User         @relation("MentorReviews", fields: [mentorId], references: [id])
+
+  rating    Int // 1..5, validated server-side
+  review    String?      @db.Text
+  status    ReviewStatus @default(PUBLISHED)
+
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([mentorId, status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  relatedId String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// REPORTS (content/user moderation)
+// ─────────────────────────────────────────────────────────────────────────
+
+// Generic reportable-target design: `targetType` names the model
+// ("REVIEW" | "MESSAGE" | "USER" | "BOOKING") and `targetId` its id,
+// rather than a foreign key per target type. Keeps this model stable as
+// new reportable content types are added later.
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  targetType String
+  targetId   String
+  reason     String       @db.Text
+  status     ReportStatus @default(OPEN)
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status])
+  @@index([targetType, targetId])
+}
