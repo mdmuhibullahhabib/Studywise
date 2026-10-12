@@ -66,12 +66,7 @@ export function MentorCard({ mentor }: { mentor: MentorCardData }) {
       </Link>
 
       <div className="flex gap-2">
-        <Link href={`/mentors/${mentor.id}`} className="btn-secondary flex-1 !py-2 text-xs">
-          View Profile
-        </Link>
-        <Link href={`/mentors/${mentor.id}`} className="btn-primary flex-1 !py-2 text-xs">
-          Book
-        </Link>
+
       </div>
     </div>
   );
