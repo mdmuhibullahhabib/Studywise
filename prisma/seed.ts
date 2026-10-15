@@ -147,8 +147,19 @@ async function main() {
   }
 
   // ── A sample conversation + completed booking + review ────────────────
-  const [jordan] = students;
-  const [priya] = mentors;
+  // const [jordan] = students;
+  // const [priya] = mentors;
+
+
+const jordan = students[0];
+const priya = mentors[0];
+
+if (!jordan || !priya) {
+  throw new Error("Seed failed: Jordan or Priya was not created.");
+}
+
+
+
 
   const conversation = await db.conversation.upsert({
     where: { studentId_mentorId: { studentId: jordan.id, mentorId: priya.user.id } },

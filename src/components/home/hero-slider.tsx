@@ -61,7 +61,7 @@ export function HeroSlider() {
     return () => clearInterval(timer);
   }, [paused]);
 
-  const slide = SLIDES[active];
+const slide = SLIDES[active] ?? SLIDES[0]!;
 
   return (
     <div

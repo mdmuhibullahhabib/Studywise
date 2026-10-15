@@ -1,125 +1,4 @@
-// "use client";
 
-// import { useMemo, useState } from "react";
-// import { useActionState } from "react";
-// import { Globe2 } from "lucide-react";
-// import { createBookingAction, type CreateBookingFormState } from "@/features/booking/create-booking-action";
-// import type { TimeSlot } from "@/features/booking/availability.service";
-// import { cn, formatCurrency, formatDate } from "@/lib/utils";
-
-// const initialState: CreateBookingFormState = {};
-
-// export function BookSessionForm({
-//   mentorProfileId,
-//   mentorHourlyRate,
-//   currency,
-//   slots,
-//   durationMinutes
-// }: {
-//   mentorProfileId: string;
-//   mentorHourlyRate: number;
-//   currency: string;
-//   slots: TimeSlot[];
-//   durationMinutes: number;
-// }) {
-//   const [state, formAction, pending] = useActionState(createBookingAction, initialState);
-//   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(slots[0] ?? null);
-//   const [subject, setSubject] = useState("");
-//   const viewerTimezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
-
-//   const slotsByDate = useMemo(() => {
-//     const map = new Map<string, TimeSlot[]>();
-//     for (const slot of slots) {
-//       const list = map.get(slot.date) ?? [];
-//       list.push(slot);
-//       map.set(slot.date, list);
-//     }
-//     return map;
-//   }, [slots]);
-
-//   const price = (mentorHourlyRate * durationMinutes) / 60;
-
-//   return (
-//     <form action={formAction} className="mt-6 space-y-6">
-//       <input type="hidden" name="mentorProfileId" value={mentorProfileId} />
-//       <input type="hidden" name="duration" value={durationMinutes} />
-//       {selectedSlot && (
-//         <>
-//           <input type="hidden" name="date" value={selectedSlot.date} />
-//           <input type="hidden" name="startTime" value={selectedSlot.startTime} />
-//           <input type="hidden" name="endTime" value={selectedSlot.endTime} />
-//           {/* Booked in the mentor's own declared timezone — the times shown
-//               above are literally that timezone's clock time, so tagging the
-//               booking with the viewer's browser timezone instead would make
-//               startTime/endTime wrong the moment they differ. */}
-//           <input type="hidden" name="timezone" value={selectedSlot.timezone} />
-//         </>
-//       )}
-
-//       <div>
-//         <label htmlFor="subject" className="field-label">
-//           What do you want to work on?
-//         </label>
-//         <input
-//           id="subject"
-//           name="subject"
-//           required
-//           value={subject}
-//           onChange={(e) => setSubject(e.target.value)}
-//           placeholder="e.g. Calculus exam prep"
-//           className="input mt-1.5"
-//         />
-//       </div>
-
-//       <div>
-//         <p className="field-label">Select a time</p>
-//         <p className="mt-1.5 flex items-center gap-1.5 text-meta text-ink-300">
-//           <Globe2 className="h-3.5 w-3.5" />
-//           Times shown in the mentor&apos;s timezone. Yours: {viewerTimezone}.
-//         </p>
-//         <div className="mt-3 max-h-72 space-y-4 overflow-y-auto pr-1">
-//           {Array.from(slotsByDate.entries()).map(([date, dateSlots]) => (
-//             <div key={date}>
-//               <p className="text-sm font-semibold text-ink">{formatDate(date)}</p>
-//               <div className="mt-2 flex flex-wrap gap-2">
-//                 {dateSlots.map((slot) => (
-//                   <button
-//                     type="button"
-//                     key={`${slot.date}-${slot.startTime}`}
-//                     onClick={() => setSelectedSlot(slot)}
-//                     className={cn(
-//                       "rounded border px-3 py-1.5 text-sm font-medium transition-colors duration-150",
-//                       selectedSlot?.date === slot.date && selectedSlot?.startTime === slot.startTime
-//                         ? "border-sage bg-sage-soft text-sage-text"
-//                         : "border-line text-ink-500 hover:border-sage/40 hover:text-ink"
-//                     )}
-//                   >
-//                     {slot.startTime}
-//                   </button>
-//                 ))}
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-
-//       <div className="card flex items-center justify-between p-4">
-//         <p className="text-sm text-ink-500">{durationMinutes}-minute session</p>
-//         <p className="font-display font-semibold text-ink">{formatCurrency(price, currency)}</p>
-//       </div>
-
-//       {state.error && (
-//         <p role="alert" className="error-text">
-//           {state.error}
-//         </p>
-//       )}
-
-//       <button type="submit" disabled={pending || !selectedSlot || !subject} className="btn-primary w-full">
-//         {pending ? "Booking…" : "Confirm booking"}
-//       </button>
-//     </form>
-//   );
-// }
 
 
 "use client";
@@ -192,14 +71,31 @@ export function BookSessionForm({
   );
 
   // Month navigation view state
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => {
-    if (activeDate) {
-      const [y, m] = activeDate.split("-").map(Number);
+  // const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+  //   if (activeDate) {
+  //     const [y, m] = activeDate.split("-").map(Number);
+  //     return new Date(y, m - 1, 1);
+  //   }
+  //   const now = new Date();
+  //   return new Date(now.getFullYear(), now.getMonth(), 1);
+  // });
+
+
+const [currentMonth, setCurrentMonth] = useState<Date>(() => {
+  if (activeDate) {
+    const parts = activeDate.split("-");
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+
+    if (Number.isFinite(y) && Number.isFinite(m) && m >= 1 && m <= 12) {
       return new Date(y, m - 1, 1);
     }
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  }
+
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+});
+
 
   // Slots for the active chosen date
   const activeSlots = useMemo(() => {

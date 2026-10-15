@@ -363,7 +363,7 @@ export default async function MentorProfilePage({ params }: MentorProfilePagePro
   const currency = result ? result.profile.currency : demo!.currency;
   const bio = result?.profile.bio;
   const teachingApproach = result?.profile.teachingApproach;
-  const avatarUrl = result ? result.profile.user?.image : demo!.avatarUrl;
+  const avatarUrl = result ? result.profile.user?.avatarUrl : demo!.avatarUrl;
   const reviews = result?.reviews ?? [];
 
   return (

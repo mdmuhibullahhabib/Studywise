@@ -13,6 +13,8 @@ interface RailProps {
 }
 
 export function MentorDiscoveryRails({ rails }: { rails: RailProps[] }) {
+  console.log("rails", rails);
+
   return (
     <section className="w-full bg-[#FAFBF9] py-20 lg:py-[100px]">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-16 xl:px-24">
@@ -79,7 +81,10 @@ export function MentorDiscoveryRails({ rails }: { rails: RailProps[] }) {
                       <div className="mt-1 flex items-center gap-1.5 text-xs text-[#55635D]">
                         <div className="flex items-center gap-1 text-[#E5A023]">
                           <Star className="h-3.5 w-3.5 fill-current" />
-                          <span className="font-bold">{mentor?.rating ?? 4.9}</span>
+                          {/* <span className="font-bold">{mentor.rating ?? 4.9}</span> */}
+                          <span className="font-bold">
+                            {mentor.ratingAverage ?? 4.9}
+                          </span>
                         </div>
                         <span>({mentor.sessionCount ?? 100} sessions)</span>
                       </div>
@@ -95,7 +100,12 @@ export function MentorDiscoveryRails({ rails }: { rails: RailProps[] }) {
                         </div>
                         <div className="flex items-center gap-2">
                           <BookOpen className="h-3.5 w-3.5 shrink-0 text-[#8C9B94]" />
-                          <span className="truncate">{mentor.expertise?.[0] || mentor?.headline || rail.subject}</span>
+
+                          {/* <span className="truncate">{mentor.expertise?.[0] || mentor?.headline || rail.subject}</span> */}
+
+                          <span className="truncate">
+                            {mentor.expertise?.[0] || mentor.title || rail.subject}
+                          </span>
                         </div>
                       </div>
 

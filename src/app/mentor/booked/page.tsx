@@ -1,35 +1,55 @@
+
 import { requireRole } from "@/lib/permissions";
 import { db } from "@/lib/db";
 import { BookingCard } from "@/components/booking/booking-card";
+import { Prisma } from "@prisma/client";
 
 export const metadata = { title: "Bookings" };
 
 interface PageProps {
-  searchParams: Promise<{ tab?: "today" | "upcoming" | "completed" | "cancelled" }>;
+  searchParams: Promise<{
+    tab?: "today" | "upcoming" | "completed" | "cancelled";
+  }>;
 }
 
 const TABS = ["today", "upcoming", "completed", "cancelled"] as const;
 
-export default async function MentorBookedPage({ searchParams }: PageProps) {
+export default async function MentorBookedPage({
+  searchParams,
+}: PageProps) {
   const session = await requireRole(["MENTOR", "ADMIN"]);
   const { tab = "today" } = await searchParams;
 
   const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
   const endOfToday = new Date(new Date().setHours(23, 59, 59, 999));
 
-  const where =
+  const where: Prisma.BookingWhereInput =
     tab === "today"
-      ? { mentorId: session.user.id, date: { gte: startOfToday, lte: endOfToday }, status: { in: ["CONFIRMED", "PENDING"] as const } }
+      ? {
+          mentorId: session.user.id,
+          date: { gte: startOfToday, lte: endOfToday },
+          status: { in: ["CONFIRMED", "PENDING"] },
+        }
       : tab === "upcoming"
-        ? { mentorId: session.user.id, status: { in: ["PENDING", "CONFIRMED"] as const }, date: { gt: endOfToday } }
+        ? {
+            mentorId: session.user.id,
+            status: { in: ["PENDING", "CONFIRMED"] },
+            date: { gt: endOfToday },
+          }
         : tab === "completed"
-          ? { mentorId: session.user.id, status: "COMPLETED" as const }
-          : { mentorId: session.user.id, status: { in: ["CANCELLED", "NO_SHOW"] as const } };
+          ? {
+              mentorId: session.user.id,
+              status: "COMPLETED",
+            }
+          : {
+              mentorId: session.user.id,
+              status: { in: ["CANCELLED", "NO_SHOW"] },
+            };
 
   const bookings = await db.booking.findMany({
     where,
     include: { student: true, meeting: true },
-    orderBy: { date: "asc" }
+    orderBy: { date: "asc" },
   });
 
   return (
@@ -41,7 +61,11 @@ export default async function MentorBookedPage({ searchParams }: PageProps) {
           <a
             key={t}
             href={`/mentor/booked?tab=${t}`}
-            className={t === tab ? "tab-link-active capitalize" : "tab-link capitalize"}
+            className={
+              t === tab
+                ? "tab-link-active capitalize"
+                : "tab-link capitalize"
+            }
           >
             {t}
           </a>
@@ -50,7 +74,9 @@ export default async function MentorBookedPage({ searchParams }: PageProps) {
 
       <div className="mt-6 space-y-3">
         {bookings.length === 0 ? (
-          <div className="card p-10 text-center text-sm text-ink-500">No {tab} sessions yet.</div>
+          <div className="card p-10 text-center text-sm text-ink-500">
+            No {tab} sessions yet.
+          </div>
         ) : (
           bookings.map((b) => (
             <BookingCard
@@ -64,7 +90,7 @@ export default async function MentorBookedPage({ searchParams }: PageProps) {
                 startTime: b.startTime,
                 duration: b.duration,
                 status: b.status,
-                meetingId: b.meeting?.id
+                meetingId: b.meeting?.id,
               }}
             />
           ))
