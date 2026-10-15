@@ -4,9 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import BANNER_IMAGE from"../../../public/images/become-a-mentor/Dreamy-Gothic-Skyline-at-Sunrise.png"
 
-const BANNER_IMAGE =
-  "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=2400&q=85";
 
 export function ReadyToShareCtaBanner() {
   return (

@@ -4,9 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import HERO_IMAGE from "../../../public/images/how-it-works/Hopeful Student at a Historic Campus.png";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2400&q=85";
 
 export function HowItWorksHero() {
   return (
@@ -39,9 +38,7 @@ export function HowItWorksHero() {
               style={{ lineHeight: 1.18 }}
               className="mt-3.5 font-serif text-3xl font-extrabold !leading-[1.18] tracking-tight text-[#0F1E17] sm:text-5xl lg:text-[50px] xl:text-[56px]"
             >
-              Studying abroad <br />
-              starts with a <br />
-              conversation.
+              Studying abroad starts <br /> with a conversation.
             </h1>
 
             <p
