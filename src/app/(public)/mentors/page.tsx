@@ -1,10 +1,8 @@
-import { SearchX } from "lucide-react";
 import { MentorService } from "@/features/mentors/mentor.service";
 import { DEMO_MENTORS } from "@/constants/demo-mentors";
 import { MentorsHero } from "@/components/mentor/MentorsHero";
 import { MentorsFilterSidebar } from "@/components/mentor/MentorsFilterSidebar";
-import { MentorPaginationOrSort } from "@/components/mentor/MentorPaginationOrSort";
-import { MentorGridCard } from "@/components/mentor/MentorGridCard";
+import { MentorsGridWithSort } from "@/components/mentor/MentorPaginationOrSort";
 import { FeaturedMentorWideCard } from "@/components/mentor/FeaturedMentorWideCard";
 import { NotSureMentorCta } from "@/components/mentor/NotSureMentorCta";
 
@@ -76,27 +74,7 @@ export default async function MentorsPage({ searchParams }: MentorsPageProps) {
 
             {/* Results & Sorter */}
             <div className="lg:col-span-9">
-              <MentorPaginationOrSort totalCount={mentors.length} />
-
-              {mentors.length === 0 ? (
-                <div className="mt-8 flex flex-col items-center justify-center rounded-3xl border border-[#E0E8E3] bg-white py-20 text-center shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EBF4F0] text-[#36887F]">
-                    <SearchX className="h-7 w-7" />
-                  </div>
-                  <h3 className="mt-4 font-serif text-2xl font-bold text-[#0F1E17]">
-                    No mentors found
-                  </h3>
-                  <p className="mt-2 text-[15px] text-[#556960]">
-                    Try adjusting your search criteria, clearing filters, or checking back later.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {mentors.map((mentor: any) => (
-                    <MentorGridCard key={mentor.id} mentor={mentor} />
-                  ))}
-                </div>
-              )}
+              <MentorsGridWithSort initialMentors={mentors} initialSort={sort} />
 
               {/* Highlighted Banner */}
               <div className="mt-12">
