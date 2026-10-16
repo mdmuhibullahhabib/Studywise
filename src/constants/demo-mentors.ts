@@ -64,34 +64,6 @@ export const DEMO_MENTORS: MentorCardData[] = [
   }
 ];
 
-export const TESTIMONIALS = [
-  {
-    quote: "My mentor had gone through the exact same scholarship process a year before me — that made all the difference.",
-    name: "Demo student account",
-    role: "Applying to graduate programs in Canada"
-  },
-  {
-    quote: "Being able to rewatch the session recording before my visa interview made all the difference.",
-    name: "Demo student account",
-    role: "Preparing for a UK study visa interview"
-  },
-  {
-    quote: "I finally understood how the SOP actually gets read — small changes, much stronger draft.",
-    name: "Demo student account",
-    role: "Applying for a Master's in Germany"
-  },
-  {
-    quote: "Talking to someone who moved from Dhaka to Melbourne last year answered questions no forum could.",
-    name: "Demo student account",
-    role: "Considering universities in Australia"
-  },
-  {
-    quote: "The mock interview session was the closest thing to the real embassy interview I could have practiced.",
-    name: "Demo student account",
-    role: "Preparing for a study visa interview"
-  }
-];
-
 export const CATEGORIES = [
   "Mathematics",
   "Physics",

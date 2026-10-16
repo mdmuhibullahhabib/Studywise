@@ -1,8 +1,15 @@
+
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";
+import { useEffect, useRef } from "react";
+import {
+  motion,
+  useInView,
+  useMotionValue,
+  useTransform,
+  animate,
+} from "framer-motion";
 
 interface Destination {
   name: string;
@@ -33,34 +40,35 @@ const STATS: StatItem[] = [
 function Counter({
   target,
   suffix,
-  onComplete,
 }: {
   target: number;
   suffix: string;
-  onComplete?: () => void;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-40px" });
-  const motionVal = useMotionValue(0);
-  const rounded = useTransform(motionVal, (latest) =>
-    Math.floor(latest).toLocaleString()
+  const isInView = useInView(ref, {
+    once: true,
+    margin: "-40px",
+  });
+
+  const motionValue = useMotionValue(0);
+
+  const rounded = useTransform(motionValue, (value) =>
+    Math.floor(value).toLocaleString("en-US")
   );
 
   useEffect(() => {
-    if (isInView) {
-      const controls = animate(motionVal, target, {
-        duration: 2.2,
-        ease: [0.16, 1, 0.3, 1], // Super smooth cubic-bezier
-        onComplete: () => {
-          if (onComplete) onComplete();
-        },
-      });
-      return controls.stop;
-    }
-  }, [isInView, motionVal, target, onComplete]);
+    if (!isInView) return;
+
+    const controls = animate(motionValue, target, {
+      duration: 2,
+      ease: [0.16, 1, 0.3, 1],
+    });
+
+    return () => controls.stop();
+  }, [isInView, motionValue, target]);
 
   return (
-    <span ref={ref}>
+    <span ref={ref} className="inline-flex tabular-nums">
       <motion.span>{rounded}</motion.span>
       {suffix}
     </span>
@@ -68,119 +76,82 @@ function Counter({
 }
 
 export function UniversityBar() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
-  const [isCounting, setIsCounting] = useState(false);
-
-  useEffect(() => {
-    if (isInView) {
-      setIsCounting(true);
-    }
-  }, [isInView]);
-
   return (
-    <section
-      ref={sectionRef}
-      className="relative w-full overflow-hidden border-y border-[#EAEFEA] bg-gradient-to-b from-[#FCFDFD] to-[#FAFBF9] py-14 lg:py-16 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.02)]"
-    >
-      {/* Background Soft Glow Accents */}
-      <div className="pointer-events-none absolute -left-20 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-[#36887F]/5 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-[#36887F]/5 blur-3xl" />
+    <section className="relative isolate w-full overflow-hidden border-y border-[#E7EDE9] bg-[#FAFBF8] py-12 sm:py-14 lg:py-16">
+      {/* Soft background accents */}
+      <div className="pointer-events-none absolute -left-24 top-1/2 -z-10 h-64 w-64 -translate-y-1/2 rounded-full bg-[#38897D]/[0.06] blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-1/2 -z-10 h-64 w-64 -translate-y-1/2 rounded-full bg-[#38897D]/[0.05] blur-3xl" />
 
-      {/* ================= EXACT FIXED LAYOUT CONTAINER ================= */}
-      <div className="relative z-10 mx-auto w-10/12">
-        <div className="relative mx-auto flex h-full w-full max-w-[1920px] flex-col items-center justify-between gap-10 px-5 sm:px-10 lg:flex-row lg:gap-8 lg:px-16 xl:px-24">
-          
-          {/* 1. Left Title */}
-          <div className="shrink-0 text-center lg:text-left">
-            <span className="text-[12px] font-bold tracking-[0.25em] text-[#36887F] uppercase sm:text-xs">
-              GLOBAL REACH
+      <div className="mx-auto w-[90%] max-w-[1440px]">
+        <div className="grid grid-cols-1 items-center gap-9 lg:grid-cols-[1fr_auto_1.25fr_auto_1fr] lg:gap-8 xl:gap-10">
+          {/* Section heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45 }}
+            className="text-center lg:text-left"
+          >
+            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#38897D]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#38897D]" />
+              Global Reach
             </span>
-            <h3
-              style={{ lineHeight: 1.2 }}
-              className="mt-2 font-serif text-[24px] sm:text-[26px] lg:text-[28px] font-bold !leading-[1.2] tracking-tight text-[#0F1E17]"
-            >
-              Students connecting <br className="hidden sm:inline" />
-              across the world.
+
+            <h3 className="mx-auto mt-3 max-w-[360px] font-sans text-[25px] font-semibold leading-[1.4] tracking-[-0.035em] text-[#15282E] sm:text-[29px] lg:mx-0 lg:text-[30px]">
+              Students connecting across the world.
             </h3>
-          </div>
+          </motion.div>
 
-          {/* Vertical Divider for Desktop */}
-          <div className="hidden h-16 w-px shrink-0 bg-gradient-to-b from-transparent via-[#DDE5E1] to-transparent lg:block" />
+          {/* Desktop divider */}
+          <div className="hidden h-16 w-px bg-[#DFE7E2] lg:block" />
 
-          {/* 2. Middle Flag Badges with Countdown Flutter/Wiggle Effect */}
-          <div className="flex shrink-0 flex-wrap items-center justify-center gap-5 sm:gap-7 lg:gap-6 xl:gap-7">
-            {DESTINATIONS.map((item, idx) => (
-              <motion.div
+          {/* Static destination flags */}
+          <div className="flex flex-wrap items-start justify-center gap-x-5 gap-y-5 sm:gap-x-7 lg:gap-x-5 xl:gap-x-6">
+            {DESTINATIONS.map((item) => (
+              <div
                 key={item.name}
-                animate={
-                  isCounting
-                    ? {
-                        y: [0, -3.5, 2, -1.5, 0],
-                        rotate: [0, -4, 4, -2, 0],
-                        scale: [1, 1.05, 0.98, 1.03, 1],
-                      }
-                    : { y: 0, rotate: 0, scale: 1 }
-                }
-                transition={
-                  isCounting
-                    ? {
-                        duration: 0.45,
-                        repeat: 4, // কাঁপতে থাকবে কাউন্টিং চলাকালীন (প্রায় ২ সেকেন্ড)
-                        delay: idx * 0.08, // ওয়েভ স্টাইলে একটার পর একটা কাঁপবে
-                        ease: "easeInOut",
-                      }
-                    : { duration: 0.3 }
-                }
-                className="group flex flex-col items-center gap-2 cursor-pointer"
+                className="group flex min-w-[48px] cursor-default flex-col items-center gap-2.5"
               >
-                {/* Flag Icon */}
-                <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-white shadow-[0_4px_16px_rgba(0,0,0,0.06)] ring-1 ring-[#E0E8E3] transition-all duration-300 group-hover:scale-115 group-hover:ring-2 group-hover:ring-[#36887F] group-hover:shadow-[0_8px_20px_rgba(54,136,127,0.2)]">
+                <div className="relative h-11 w-11 overflow-hidden rounded-full border border-[#DFE8E3] bg-white shadow-[0_3px_10px_rgba(21,40,46,0.05)] transition-[border-color,box-shadow] duration-200 group-hover:border-[#38897D]/60 group-hover:shadow-[0_5px_14px_rgba(56,137,125,0.13)] sm:h-12 sm:w-12">
                   <Image
                     src={item.flag}
-                    alt={item.name}
+                    alt={`${item.name} flag`}
                     fill
                     sizes="48px"
                     className="object-cover"
                   />
-                  {/* Subtle glass reflection effect */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/30" />
                 </div>
 
-                {/* Country Name */}
-                <span className="text-[13px] font-semibold text-[#556960] transition-colors group-hover:text-[#0F1E17]">
+                <span className="text-xs font-medium text-[#64736D] transition-colors duration-200 group-hover:text-[#15282E]">
                   {item.name}
                 </span>
-              </motion.div>
+              </div>
             ))}
           </div>
 
-          {/* Vertical Divider for Desktop */}
-          <div className="hidden h-16 w-px shrink-0 bg-gradient-to-b from-transparent via-[#DDE5E1] to-transparent lg:block" />
+          {/* Desktop divider */}
+          <div className="hidden h-16 w-px bg-[#DFE7E2] lg:block" />
 
-          {/* 3. Right Animated Stats */}
-          <div className="flex shrink-0 items-center justify-center divide-x divide-[#E0E8E3]">
-            {STATS.map((stat, idx) => (
+          {/* Animated stats */}
+          <div className="grid grid-cols-3 divide-x divide-[#DFE7E2] border-t border-[#E7EDE9] pt-7 lg:border-t-0 lg:pt-0">
+            {STATS.map((stat) => (
               <div
                 key={stat.label}
-                className="px-5 text-center first:pl-0 last:pr-0 sm:px-7 lg:px-6 xl:px-8"
+                className="px-3 text-center first:pl-0 last:pr-0 sm:px-5 lg:px-4 xl:px-5"
               >
-                <p className="font-serif text-2xl font-bold tracking-tight text-[#0F1E17] sm:text-3xl lg:text-[34px]">
+                <p className="font-sans text-[25px] font-semibold leading-tight tracking-[-0.04em] text-[#15282E] sm:text-[29px] xl:text-[32px]">
                   <Counter
                     target={stat.value}
                     suffix={stat.suffix}
-                    onComplete={
-                      idx === 0 ? () => setIsCounting(false) : undefined
-                    }
                   />
                 </p>
-                <p className="mt-1 text-[13px] sm:text-[14px] font-medium text-[#556960]">
+
+                <p className="mt-2 text-[11px] font-medium text-[#73817B] sm:text-xs">
                   {stat.label}
                 </p>
               </div>
             ))}
           </div>
-
         </div>
       </div>
     </section>
