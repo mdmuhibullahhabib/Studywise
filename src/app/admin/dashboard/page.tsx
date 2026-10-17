@@ -1,78 +1,170 @@
-import Link from "next/link";
 import { requireRole } from "@/lib/permissions";
 import { db } from "@/lib/db";
-import { formatCurrency } from "@/lib/utils";
+import { AdminDashboardClient } from "@/components/admin/dashboard/AdminDashboardClient";
+import {
+  AdminPaymentItem,
+  AdminBookingItem,
+  AdminUserItem,
+  AdminApplicationItem,
+  AdminReportItem,
+  AdminReviewItem,
+} from "@/components/admin/dashboard/types";
 
-export const metadata = { title: "Admin dashboard" };
+export const metadata = { title: "Admin Analytics & Platform Overview | StudyWise" };
 
 export default async function AdminDashboardPage() {
   await requireRole("ADMIN");
 
+  // Fetch all core datasets concurrently
   const [
-    totalStudents,
-    totalMentors,
-    pendingApplications,
-    totalSessions,
-    openReports,
-    monthlyRevenue
+    paymentsRaw,
+    bookingsRaw,
+    usersRaw,
+    applicationsRaw,
+    reportsRaw,
+    reviewsRaw,
   ] = await Promise.all([
-    db.user.count({ where: { role: "STUDENT" } }),
-    db.user.count({ where: { role: "MENTOR" } }),
-    db.mentorApplication.count({ where: { status: { in: ["PENDING", "UNDER_REVIEW"] } } }),
-    db.booking.count({ where: { status: "COMPLETED" } }),
-    db.report.count({ where: { status: "OPEN" } }),
-    db.payment.aggregate({
-      where: { status: "SUCCEEDED", createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } },
-      _sum: { platformFee: true }
-    })
+    db.payment.findMany({
+      include: {
+        student: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        mentor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.booking.findMany({
+      include: {
+        student: { select: { id: true, name: true, email: true } },
+        mentor: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.mentorApplication.findMany({
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.report.findMany({
+      orderBy: { createdAt: "desc" },
+    }),
+    db.review.findMany({
+      include: {
+        student: { select: { name: true } },
+        mentor: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
-  const stats = [
-    { label: "Students", value: totalStudents },
-    { label: "Mentors", value: totalMentors },
-    { label: "Completed sessions", value: totalSessions },
-    { label: "Platform revenue (month)", value: formatCurrency(Number(monthlyRevenue._sum.platformFee ?? 0)) }
-  ];
-
-  const attentionItems = [
-    {
-      label: "Pending mentor applications",
-      count: pendingApplications,
-      href: "/admin/applications"
+  // Safely serialize Decimals and Dates for client component hydration
+  const initialPayments: AdminPaymentItem[] = paymentsRaw.map((p) => ({
+    id: p.id,
+    bookingId: p.bookingId,
+    amount: Number(p.amount),
+    platformFee: Number(p.platformFee),
+    mentorAmount: Number(p.mentorAmount),
+    currency: p.currency,
+    status: p.status,
+    createdAt: p.createdAt.toISOString(),
+    student: {
+      id: p.student.id,
+      name: p.student.name,
+      email: p.student.email,
+      avatarUrl: p.student.avatarUrl,
     },
-    { label: "Open reports", count: openReports, href: "/admin/reports" }
-  ];
+    mentor: {
+      id: p.mentor.id,
+      name: p.mentor.name,
+      email: p.mentor.email,
+      avatarUrl: p.mentor.avatarUrl,
+    },
+  }));
+
+  const initialBookings: AdminBookingItem[] = bookingsRaw.map((b) => ({
+    id: b.id,
+    studentId: b.studentId,
+    mentorId: b.mentorId,
+    subject: b.subject,
+    date: b.date.toISOString(),
+    startTime: b.startTime,
+    endTime: b.endTime,
+    duration: b.duration,
+    price: Number(b.price),
+    currency: b.currency,
+    status: b.status,
+    createdAt: b.createdAt.toISOString(),
+    student: {
+      id: b.student.id,
+      name: b.student.name,
+      email: b.student.email,
+    },
+    mentor: {
+      id: b.mentor.id,
+      name: b.mentor.name,
+      email: b.mentor.email,
+    },
+  }));
+
+  const initialUsers: AdminUserItem[] = usersRaw.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    status: u.status,
+    createdAt: u.createdAt.toISOString(),
+  }));
+
+  const initialApplications: AdminApplicationItem[] = applicationsRaw.map((a) => ({
+    id: a.id,
+    userId: a.userId,
+    status: a.status,
+    createdAt: a.createdAt.toISOString(),
+    user: {
+      id: a.user.id,
+      name: a.user.name,
+      email: a.user.email,
+    },
+  }));
+
+  const initialReports: AdminReportItem[] = reportsRaw.map((r) => ({
+    id: r.id,
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+  }));
+
+  const initialReviews: AdminReviewItem[] = reviewsRaw.map((rev) => ({
+    id: rev.id,
+    rating: rev.rating,
+    review: rev.review,
+    status: rev.status,
+    createdAt: rev.createdAt.toISOString(),
+    student: {
+      name: rev.student.name,
+    },
+    mentor: {
+      name: rev.mentor.name,
+    },
+  }));
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-h1">Platform overview</h1>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="card p-5">
-            <p className="font-display text-3xl text-ink">{stat.value}</p>
-            <p className="mt-1 text-sm text-ink-500">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
-      <section className="mt-10">
-        <h2 className="text-h2">Needs attention</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {attentionItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="card flex items-center justify-between p-5 hover:border-ink/20"
-            >
-              <p className="text-sm text-ink-500">{item.label}</p>
-              <p className={`font-display text-2xl ${item.count > 0 ? "text-gold" : "text-ink-300"}`}>
-                {item.count}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
-    </div>
+    <AdminDashboardClient
+      initialPayments={initialPayments}
+      initialBookings={initialBookings}
+      initialUsers={initialUsers}
+      initialApplications={initialApplications}
+      initialReports={initialReports}
+      initialReviews={initialReviews}
+    />
   );
 }
