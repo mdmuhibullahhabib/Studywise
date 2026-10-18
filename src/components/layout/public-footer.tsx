@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, Globe, Twitter, Linkedin } from "lucide-react";
+import { ArrowUpRight, MessageCircle } from "lucide-react";
 
 const FOOTER_COLUMNS = [
   {
@@ -32,64 +32,40 @@ const FOOTER_COLUMNS = [
 
 export function PublicFooter() {
   return (
-    <footer className="w-full border-t border-[#E8ECE9] bg-[#FAFBF9] pt-14 pb-8 text-xs text-[#63746C]">
-      <div className="mx-auto w-10/12 px-6 sm:px-12 lg:px-16 xl:px-24">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
-          {/* Brand Info & Social Icons */}
-          <div className="col-span-2 md:col-span-2">
+    <footer className="w-full border-t border-[#E8ECE9] bg-[#F6F8F6] text-[#52645B]">
+      <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10 sm:py-14 lg:px-12">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))] lg:gap-12">
+          <div>
             <Link
               href="/"
-              className="font-serif text-xl font-bold tracking-tight text-[#0F1E17]"
+              className="inline-flex rounded-sm font-serif text-3xl font-bold tracking-tight text-[#0F1E17] transition-colors hover:text-[#1C3E30]"
             >
               StudyWise
             </Link>
-            <p className="mt-3 max-w-sm text-xs leading-relaxed text-[#6E8077]">
-              Connecting aspiring students with real study-abroad experiences.[cite: 5, 6, 8]
+            <p className="mt-4 max-w-sm text-base leading-relaxed text-[#52645B]">
+              Connecting aspiring students with real study-abroad experiences.
             </p>
-
-            {/* Social Icons matching mockup */}
-            <div className="mt-5 flex items-center gap-3 text-[#7B8C84]">
-              <a
-                href="#"
-                aria-label="Community"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#DCE4DF] bg-white transition-colors hover:border-[#1C3E30] hover:text-[#1C3E30]"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href="#"
-                aria-label="Global"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#DCE4DF] bg-white transition-colors hover:border-[#1C3E30] hover:text-[#1C3E30]"
-              >
-                <Globe className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href="#"
-                aria-label="Twitter/X"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#DCE4DF] bg-white transition-colors hover:border-[#1C3E30] hover:text-[#1C3E30]"
-              >
-                <Twitter className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href="#"
-                aria-label="LinkedIn"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#DCE4DF] bg-white transition-colors hover:border-[#1C3E30] hover:text-[#1C3E30]"
-              >
-                <Linkedin className="h-3.5 w-3.5" />
-              </a>
-            </div>
+            <Link
+              href="/contact"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-[#D5E0D9] bg-white px-4 text-sm font-semibold text-[#1C3E30] transition-colors hover:border-[#1C3E30] hover:bg-[#EDF3EF]"
+            >
+              <MessageCircle aria-hidden="true" className="h-4 w-4" />
+              Get in touch
+              <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
           </div>
 
-          {/* Dynamic Link Columns */}
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.title}>
-              <h4 className="font-semibold text-[#0F1E17]">{column.title}</h4>
-              <ul className="mt-3 space-y-2">
+              <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[#0F1E17]">
+                {column.title}
+              </h2>
+              <ul className="mt-4 space-y-1">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-[#63746C] transition-colors hover:text-[#1C3E30]"
+                      className="inline-flex min-h-11 items-center text-base text-[#52645B] transition-colors hover:text-[#1C3E30] hover:underline hover:underline-offset-4"
                     >
                       {link.label}
                     </Link>
@@ -100,11 +76,12 @@ export function PublicFooter() {
           ))}
         </div>
 
-        {/* Bottom Copyright & Brand Motto */}
-        <div className="mt-12 flex flex-col items-center justify-between border-t border-[#EAEFEA] pt-6 text-[11px] sm:flex-row">
-          <p>© {new Date().getFullYear()} StudyWise. All rights reserved.[cite: 3, 6, 8]</p>
-          <p className="mt-2 font-serif italic text-[#768780] sm:mt-0">
-            Real people. Real journeys. StudyWise.[cite: 5, 6, 8]
+        <div className="mt-10 flex flex-col gap-3 border-t border-[#DCE4DF] pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[#52645B]">
+            © {new Date().getFullYear()} StudyWise. All rights reserved.
+          </p>
+          <p className="text-sm font-medium text-[#52645B]">
+            Real people. Real journeys. StudyWise.
           </p>
         </div>
       </div>
